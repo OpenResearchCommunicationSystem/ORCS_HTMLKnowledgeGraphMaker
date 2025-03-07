@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph Builder (Offline, Clean Layout)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, textarea { padding: 5px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        .container { width: 100%; display: flex; justify-content: space-between; gap: 10px; }
+        .info-box { border: 1px solid black; padding: 5px; text-align: center; min-height: 20px; width: 30%; }
+        .button-row, .display-row, .action-row, .export-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <h2>Knowledge Graph Builder (Private, Offline)</h2>
+
+    <!-- Compact Citation & Classification Row -->
+    <div class="container">
+        <label>Short Citation: <input type="text" id="shortCitation" placeholder="Optional"></label>
+        <label>Long Citation: <input type="text" id="longCitation" placeholder="Optional"></label>
+        <label>Classification: <input type="text" id="classification" placeholder="Optional"></label>
+    </div>
+
+    <!-- Main Text Area -->
+    <textarea id="textArea" placeholder="Paste text here..." style="width: 100%; height: 100px; margin-top: 10px;"></textarea>
+
+    <!-- Selection Buttons Row -->
+    <div class="button-row">
+        <button onclick="selectEntity1()">Select Entity 1</button>
+        <button onclick="selectLink()">Select Link</button>
+        <button onclick="selectEntity2()">Select Entity 2</button>
+    </div>
+
+    <!-- Display Selected Values Row -->
+    <div class="display-row">
+        <div class="info-box" id="entity1Display">[Entity 1 not selected]</div>
+        <div class="info-box" id="linkDisplay">[Link not selected]</div>
+        <div class="info-box" id="entity2Display">[Entity 2 not selected]</div>
+    </div>
+
+    <!-- Add Relationship Options Row -->
+    <div class="action-row">
+        <button onclick="addToGraph(true, false)">Add as Relationship</button>
+        <button onclick="addToGraph(false, true)">Add as Attribute</button>
+        <button onclick="addToGraph(true, true)">Add as Both</button>
+    </div>
+
+    <!-- Export Button Row -->
+    <div class="export-row">
+        <button onclick="exportCSV()">Export as CSV</button>
+    </div>
+
+    <h3>Links</h3>
+    <table id="relationshipTable">
+        <tr>
+            <th>Entity 1</th>
+            <th>Link</th>
+            <th>Entity 2</th>
+            <th>Short Citation</th>
+            <th>Long Citation</th>
+            <th>Classification</th>
+            <th>Relationship (Boolean)</th>
+            <th>Attribute (Boolean)</th>
+        </tr>
+    </table>
+
+    <script>
+        let entity1 = "";
+        let link = "";
+        let entity2 = "";
+        let relationships = [];
+
+        function getSelectedText() {
+            return window.getSelection().toString().trim();
+        }
+
+        function selectEntity1() {
+            let text = getSelectedText();
+            if (text) {
+                entity1 = text;
+                document.getElementById("entity1Display").innerText = "Entity 1: " + entity1;
+            } else {
+                alert("Please highlight text for Entity 1.");
+            }
+        }
+
+        function selectEntity2() {
+            let text = getSelectedText();
+            if (text) {
+                entity2 = text;
+                document.getElementById("entity2Display").innerText = "Entity 2: " + entity2;
+            } else {
+                alert("Please highlight text for Entity 2.");
+            }
+        }
+
+        function selectLink() {
+            let text = getSelectedText();
+            if (text) {
+                link = text;
+                document.getElementById("linkDisplay").innerText = "Link: " + link;
+            } else {
+                alert("Please highlight text for the Link.");
+            }
+        }
+
+        function addToGraph(isRelationship, isAttribute) {
+            if (!entity1 || !link || !entity2) {
+                alert("Please select Entity 1, a Link, and Entity 2 before adding to the graph.");
+                return;
+            }
+
+            let shortCitation = document.getElementById("shortCitation").value.trim();
+            let longCitation = document.getElementById("longCitation").value.trim();
+            let classification = document.getElementById("classification").value.trim();
+
+            relationships.push({ entity1, link, entity2, shortCitation, longCitation, classification, isRelationship, isAttribute });
+
+            let table = document.getElementById("relationshipTable");
+            let row = table.insertRow();
+            row.insertCell(0).innerText = entity1;
+            row.insertCell(1).innerText = link;
+            row.insertCell(2).innerText = entity2;
+            row.insertCell(3).innerText = shortCitation || "[None]";
+            row.insertCell(4).innerText = longCitation || "[None]";
+            row.insertCell(5).innerText = classification || "[None]";
+            row.insertCell(6).innerText = isRelationship ? "true" : "false";
+            row.insertCell(7).innerText = isAttribute ? "true" : "false";
+
+            document.getElementById("entity1Display").innerText = "[Entity 1 not selected]";
+            document.getElementById("linkDisplay").innerText = "[Link not selected]";
+            document.getElementById("entity2Display").innerText = "[Entity 2 not selected]";
+
+            entity1 = "";
+            link = "";
+            entity2 = "";
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Entity 1,Link,Entity 2,Short Citation,Long Citation,Classification,Relationship,Attribute\n";
+
+            relationships.forEach(({ entity1, link, entity2, shortCitation, longCitation, classification, isRelationship, isAttribute }) => {
+                let row = `"${entity1}","${link}","${entity2}","${shortCitation}","${longCitation}","${classification}","${isRelationship}","${isAttribute}"\n`;
+                csvContent += row;
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let linkElement = document.createElement("a");
+            linkElement.setAttribute("href", encodedUri);
+            linkElement.setAttribute("download", "knowledge_graph.csv");
+            document.body.appendChild(linkElement);
+            linkElement.click();
+            document.body.removeChild(linkElement);
+        }
+    </script>
+</body>
+</html>
